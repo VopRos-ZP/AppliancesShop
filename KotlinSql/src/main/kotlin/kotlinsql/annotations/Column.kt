@@ -1,3 +1,4 @@
 package kotlinsql.annotations
 
-annotation class Column
+@Target(AnnotationTarget.FIELD)
+annotation class Column(val name: String = "")

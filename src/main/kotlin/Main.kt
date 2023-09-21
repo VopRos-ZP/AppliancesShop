@@ -9,6 +9,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
+import kotlinsql.DbConnection
 
 @Composable
 @Preview
@@ -22,6 +23,7 @@ fun App() {
             Text(text)
         }
     }
+
 }
 
 fun main() = application {

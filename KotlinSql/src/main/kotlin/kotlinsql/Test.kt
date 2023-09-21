@@ -7,8 +7,8 @@ fun main() {
 class Test {
 
     fun reflectionTest() {
-        val dbConnection = DbConnection("appliances_shop", "postgres", "VopRos366")
-        dbConnection.runScript(Category::class, "SELECT * FROM Categories")
+        val dbConnection = DbConnection("appliances_shop", "postgres", "root") // VopRos366 for Win
+        println(dbConnection.runScript(Category::class.java, sql = "SELECT * FROM Categories"))
     }
 
 }
