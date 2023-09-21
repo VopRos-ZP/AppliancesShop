@@ -16,6 +16,8 @@ repositories {
 
 dependencies {
     implementation(project("KotlinSql"))
+    implementation("com.google.dagger:dagger:2.48")
+    annotationProcessor("com.google.dagger:dagger-compiler:2.48")
     implementation(compose.desktop.currentOs)
 }
 
