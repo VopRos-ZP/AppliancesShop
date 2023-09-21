@@ -1,4 +1,4 @@
-package kotlinsql
+package models
 
 import kotlinsql.annotations.Column
 import kotlinsql.annotations.PrimaryKey

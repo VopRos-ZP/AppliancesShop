@@ -8,6 +8,9 @@ fun App() {
     // some ui
 }
 
+//val dbConnection = DbConnection("appliances_shop", "postgres", "root") // VopRos366 for Win
+//println(dbConnection.runScript(Category::class.java, sql = "SELECT * FROM Categories"))
+
 fun main() = application {
     Window(onCloseRequest = ::exitApplication) {
         MaterialTheme {
