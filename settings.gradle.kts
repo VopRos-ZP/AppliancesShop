@@ -11,3 +11,4 @@ pluginManagement {
 }
 
 rootProject.name = "AppliancesShop"
+include("KotlinSql")
