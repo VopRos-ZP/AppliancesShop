@@ -3,10 +3,11 @@ import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 plugins {
     kotlin("jvm")
     id("org.jetbrains.compose")
+    id("com.google.devtools.ksp")
 }
 
-group = "com.vopros"
-version = "1.0-SNAPSHOT"
+group = "com.vopros.appliance"
+version = "1.0"
 
 repositories {
     mavenCentral()
@@ -15,9 +16,18 @@ repositories {
 }
 
 dependencies {
-    implementation(project("KotlinSql"))
+    /* Postgresql */
+    implementation("org.postgresql:postgresql:42.6.0")
+    /* DI */
     implementation("com.google.dagger:dagger:2.48")
-    annotationProcessor("com.google.dagger:dagger-compiler:2.48")
+    ksp("com.google.dagger:dagger-compiler:2.48")
+    /* Exposed */
+    val exposed = "0.44.0"
+    implementation("org.jetbrains.exposed:exposed-core:$exposed")
+    implementation("org.jetbrains.exposed:exposed-jdbc:$exposed")
+    implementation("org.jetbrains.exposed:exposed-dao:$exposed")
+    implementation("org.jetbrains.exposed:exposed-kotlin-datetime:$exposed")
+    /* Compose */
     implementation(compose.desktop.currentOs)
 }
 
