@@ -6,10 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Card
-import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
-import androidx.compose.material.Text
+import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
@@ -21,63 +18,61 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import models.Model
+import org.jetbrains.exposed.sql.Column
 import ui.Table
 
 @Composable
-fun UITable(columns: List<TableField<*>>) {
+fun UITable(table: FKTableField<*, *>, onAddClick: (FKTableField<*, *>) -> Unit) {
     Card(
         modifier = Modifier.animateContentSize(),
-        backgroundColor = Color.DarkGray,
+        backgroundColor = MaterialTheme.colors.primary,
         shape = RoundedCornerShape(5.dp),
         border = BorderStroke(1.dp, Color.Black)
     ) {
         Column(modifier = Modifier.padding(10.dp)) {
             Text(
-                text = columns.first().columns.first().table.tableName,
+                text = table.columns.first().table.tableName,
                 textAlign = TextAlign.Center,
                 fontWeight = FontWeight.Black,
                 textDecoration = TextDecoration.Underline,
             )
             Row {
-                IconButton(onClick = {}) {
-                    Icon(Icons.Default.Add, contentDescription = null,)
-                }
-                IconButton(onClick = {}, enabled = false) {
-                    Icon(Icons.Default.Done, contentDescription = null)
-                }
-                IconButton(onClick = {}, enabled = false) {
-                    Icon(Icons.Default.Close, contentDescription = null)
+                IconButton(onClick = { onAddClick(table) }) {
+                    Icon(Icons.Default.Add, contentDescription = null)
                 }
             }
             Table(
-                columnCount = columns.first().columns.size,
+                columnCount = table.columns.size,
                 cellWidth = { when (it) {
                     0 -> 50.dp
                     else -> 225.dp
                 } },
-                data = columns,
-                color = Color.DarkGray,
-                headerCellContent = { UITableHeader(it, columns) },
-                cellContent = { i, item -> UITableCell(i, item) }
+                data = table.data,
+                color = MaterialTheme.colors.primary,
+                headerCellContent = { UITableHeader(it, table.columns) },
+                cellContent = { i, item -> UITableCell(i, item, table.columns) }
             )
         }
     }
 }
 
 @Composable
-fun UITableHeader(index: Int, fields: List<TableField<*>>) {
+fun UITableHeader(index: Int, columns: List<Column<*>>) {
     Text(
-        text = fields.first().columns[index].name,
+        text = columns[index].name,
         textAlign = TextAlign.Center,
-        modifier = Modifier.padding(vertical = 10.dp)
+        modifier = Modifier.padding(vertical = 10.dp),
+        color = MaterialTheme.colors.onPrimary
     )
 }
 
 @Composable
-fun UITableCell(index: Int, field: TableField<*>) {
+fun <T: Model> UITableCell(index: Int, model: T, columns: List<Column<*>>) {
     Text(
-        text = "${field.data.fields[field.columns[index].name]}",
+        text = "${model.fields[columns[index].name]}",
         textAlign = TextAlign.Center,
-        modifier = Modifier.padding(vertical = 10.dp)
+        modifier = Modifier.padding(vertical = 10.dp),
+        color = MaterialTheme.colors.onPrimary
     )
 }

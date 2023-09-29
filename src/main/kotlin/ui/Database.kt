@@ -7,6 +7,7 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import tables.Categories
 import tables.Product
 import tables.Sales
+import ui.table.FKTableField
 import ui.table.TableField
 
 class Database {
@@ -14,34 +15,39 @@ class Database {
     private val db = Database.connect(
         "jdbc:postgresql://localhost:5432/appliances_shop",
         driver = "org.postgresql.Driver",
-        user = "postgres", password = "root"
+        user = "postgres", password = "VopRos366"
     )
 
-    fun fetchCategoryTable(): List<TableField<*>> = transaction(db) {
-        fetchCategories().map {
-            TableField(it, listOf(Categories.id, Categories.name))
-        }
+    fun fetchCategoryTable(): FKTableField<*, *> = transaction(db) {
+        FKTableField(
+            listOf(Categories.id, Categories.name),
+            fetchCategories(), emptyList()
+        )
     }
 
-    fun fetchProductTable(): List<TableField<*>> = transaction(db) {
-        fetchProducts().map {
-            TableField(it, listOf(
+    fun fetchProductTable(): FKTableField<*, *> = transaction(db) {
+        FKTableField(
+            listOf(
                 Product.id, Product.name,
                 Product.category, Product.price,
                 Product.installationPrice,
                 Product.guaranteePrice
-            ))
-        }
+            ),
+            fetchProducts(),
+            fetchCategories()
+        )
     }
 
-    fun fetchSaleTable(): List<TableField<*>> = transaction(db) {
-        fetchSales().map {
-            TableField(it, listOf(
+    fun fetchSaleTable(): FKTableField<*, *> = transaction(db) {
+        FKTableField(
+            listOf(
                 Sales.id, Sales.date,
                 Sales.productId, Sales.lastname,
                 Sales.firstname, Sales.patronymic
-            ))
-        }
+            ),
+            fetchSales(),
+            fetchProducts()
+        )
     }
 
     fun fetchCategories(): List<Model.Category> = transaction(db) {

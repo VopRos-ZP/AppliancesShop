@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -42,7 +43,7 @@ fun <T> Table(
                 Column(modifier = Modifier.background(Color.Transparent)) {
                     (0..data.size).forEach { index ->
                         Surface(
-                            border = BorderStroke(1.dp, Color.Black),
+                            border = BorderStroke(1.dp, MaterialTheme.colors.onPrimary),
                             contentColor = Color.Transparent,
                             color = color,
                             modifier = Modifier.width(cellWidth(columnIndex))
