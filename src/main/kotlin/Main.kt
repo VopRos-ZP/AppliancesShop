@@ -1,83 +1,61 @@
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
+import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.List
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
-import models.*
-import ui.HomeViewModel
+import androidx.compose.ui.window.rememberWindowState
+import ui.Database
+import ui.table.UITable
 
 @Composable
 fun App() {
-    val sales = remember { mutableStateListOf<Sale>() }
-    Column {
-        Box(
-            modifier = Modifier.fillMaxWidth(),
-            contentAlignment = Alignment.CenterEnd
-        ) {
-            IconButton({
-                sales.clear()
-                sales.addAll(fetchSalesFromDb())
-            }) {
-                Icon(Icons.Default.List, contentDescription = null)
-            }
-        }
-        LazyColumn(modifier = Modifier.fillMaxSize()) {
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceAround
-                ) {
-                    Text("№ п/п")
-                    Text("Дата продажи")
-                    Text("ФИО покупателя")
-                    Text("Категория товара")
-                    Text("Наименование")
-                    Text("Общая стоимость")
-                }
-            }
-            items(sales) { SaleRow(it) }
-        }
-    }
-    LaunchedEffect(null) {
-        sales.clear()
-        sales.addAll(fetchSalesFromDb())
-    }
-}
-
-@Composable
-fun SaleRow(sale: Sale) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceAround
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        drawerContent = {}
     ) {
-        Text("${sale.id}")
-        Text("${sale.date}")
-        Text(sale.fio)
-        Text(sale.product.category)
-        Text(sale.product.name)
-        Text("${sale.product.price}")
+
+    }
+    val database by remember { mutableStateOf(Database()) }
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black)
+            .padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp)
+    ) {
+        item {
+            Row {
+                Button(onClick = {}) { Text("Создать запрос") }
+            }
+        }
+        items(listOf(
+            database.fetchCategoryTable(),
+            database.fetchProductTable(),
+            database.fetchSaleTable(),
+        )) { UITable(it) }
     }
 }
-
-private fun fetchSalesFromDb(): List<Sale> {
-    return HomeViewModel().fetch()
-}
-//val dbConnection = DbConnection("appliances_shop", "postgres", "root") // VopRos366 for Win
-//println(dbConnection.runScript(Category::class.java, sql = "SELECT * FROM Categories"))
 
 fun main() = application {
-    Window(onCloseRequest = ::exitApplication) {
-        MaterialTheme {
-            App()
-        }
-    }
+    val state = rememberWindowState()
+    Window(
+        onCloseRequest = ::exitApplication,
+        title = "Appliances shop",
+        state = state
+    ) { MaterialTheme { App() } }
 }
