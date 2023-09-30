@@ -15,7 +15,7 @@ class Database {
     private val db = Database.connect(
         "jdbc:postgresql://localhost:5432/appliances_shop",
         driver = "org.postgresql.Driver",
-        user = "postgres", password = "VopRos366"
+        user = "postgres", password = "root"
     )
 
     fun fetchCategoryTable(): FKTableField<*, *> = transaction(db) {

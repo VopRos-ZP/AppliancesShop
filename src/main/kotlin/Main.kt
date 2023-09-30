@@ -23,7 +23,10 @@ fun App() {
     var target by remember { mutableStateOf<FKTableField<*, *>?>(null) }
     Box {
         AnimatedVisibility(target != null) {
-            target?.let { AddDialog(it) { target = null } }
+            target?.let { AddDialog(it) { m ->
+                println(m)
+                target = null
+            } }
         }
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
