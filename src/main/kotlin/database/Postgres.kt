@@ -1,23 +1,33 @@
-package ui
+package database
 
 import models.Model
-import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
 import tables.Categories
 import tables.Product
 import tables.Sales
 import ui.table.FKTableField
-import ui.table.TableField
 
-class Database {
+class Postgres {
 
     private val db = Database.connect(
         "jdbc:postgresql://localhost:5432/appliances_shop",
         driver = "org.postgresql.Driver",
-        user = "postgres", password = "VopRos366"
+        user = "postgres", password = "root"
     )
+
+    fun deleteCategoryById(categoryId: Int) {
+        transaction(db) { Categories.deleteWhere { id eq categoryId } }
+    }
+
+    fun deleteProductById(productId: Int) {
+        transaction(db) { Product.deleteWhere { id eq productId } }
+    }
+
+    fun deleteSaleById(saleId: Int) {
+        transaction(db) { Sales.deleteWhere { id eq saleId } }
+    }
 
     fun insertCategory(category: Model.Category) {
         transaction(db) {
@@ -86,7 +96,7 @@ class Database {
         )
     }
 
-    fun fetchCategories(): List<Model.Category> = transaction(db) {
+    private fun fetchCategories(): List<Model.Category> = transaction(db) {
         Categories.selectAll().map {
             Model.Category(
                 it[Categories.id].value,
@@ -95,7 +105,7 @@ class Database {
         }
     }
 
-    fun fetchProducts(): List<Model.Product> = transaction(db) {
+    private fun fetchProducts(): List<Model.Product> = transaction(db) {
         val categories = fetchCategories()
         Product.selectAll().map {
             Model.Product(
@@ -109,7 +119,7 @@ class Database {
         }
     }
 
-    fun fetchSales(): List<Model.Sale> {
+    private fun fetchSales(): List<Model.Sale> {
         return transaction(db) {
             val products = fetchProducts()
             Sales.selectAll().map {
