@@ -11,20 +11,30 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
+import models.Model
 import ui.AddDialog
 import ui.Database
 import ui.table.FKTableField
-import ui.table.TableField
 import ui.table.UITable
 
 @Composable
 fun App() {
     val database by remember { mutableStateOf(Database()) }
     var target by remember { mutableStateOf<FKTableField<*, *>?>(null) }
+
+    var categories by remember(database) { mutableStateOf(database.fetchCategories()) }
+    var products by remember(database) { mutableStateOf(database.fetchProducts()) }
+    var sales by remember(database) { mutableStateOf(database.fetchSales()) }
+
     Box {
         AnimatedVisibility(target != null) {
             target?.let { AddDialog(it) { m ->
-                println(m)
+                when (m) {
+                    is Model.Category -> database.insertCategory(m)
+                    is Model.Product -> database.insertProduct(m)
+                    is Model.Sale -> database.insertSale(m)
+                    else -> {}
+                }
                 target = null
             } }
         }
@@ -43,7 +53,7 @@ fun App() {
                 database.fetchProductTable(),
                 database.fetchSaleTable(),
             )) {
-                UITable(it) { t -> target = t }
+                UITable(it) { target = it }
             }
         }
     }

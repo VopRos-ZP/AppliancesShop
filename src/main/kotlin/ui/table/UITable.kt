@@ -23,7 +23,7 @@ import org.jetbrains.exposed.sql.Column
 import ui.Table
 
 @Composable
-fun UITable(table: FKTableField<*, *>, onAddClick: (FKTableField<*, *>) -> Unit) {
+fun UITable(table: FKTableField<*, *>, onAddClick: () -> Unit) {
     Card(
         modifier = Modifier.animateContentSize(),
         backgroundColor = MaterialTheme.colors.primary,
@@ -38,7 +38,7 @@ fun UITable(table: FKTableField<*, *>, onAddClick: (FKTableField<*, *>) -> Unit)
                 textDecoration = TextDecoration.Underline,
             )
             Row {
-                IconButton(onClick = { onAddClick(table) }) {
+                IconButton(onClick = onAddClick) {
                     Icon(Icons.Default.Add, contentDescription = null)
                 }
             }

@@ -2,6 +2,7 @@ package ui
 
 import models.Model
 import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import tables.Categories
@@ -15,8 +16,43 @@ class Database {
     private val db = Database.connect(
         "jdbc:postgresql://localhost:5432/appliances_shop",
         driver = "org.postgresql.Driver",
-        user = "postgres", password = "root"
+        user = "postgres", password = "VopRos366"
     )
+
+    fun insertCategory(category: Model.Category) {
+        transaction(db) {
+            Categories.insert {
+                it[id] = category.id
+                it[name] = category.name
+            }
+        }
+    }
+
+    fun insertProduct(product: Model.Product) {
+        transaction(db) {
+            Product.insert {
+                it[id] = product.id
+                it[name] = product.name
+                it[category] = product.category.id
+                it[price] = product.price
+                it[installationPrice] = product.installationPrice
+                it[guaranteePrice] = product.guaranteePrice
+            }
+        }
+    }
+
+    fun insertSale(sale: Model.Sale) {
+        transaction(db) {
+            Sales.insert {
+                it[id] = sale.id
+                it[date] = sale.date
+                it[productId] = sale.product.id
+                it[lastname] = sale.lastname
+                it[firstname] = sale.firstname
+                it[patronymic] = sale.patronymic
+            }
+        }
+    }
 
     fun fetchCategoryTable(): FKTableField<*, *> = transaction(db) {
         FKTableField(
