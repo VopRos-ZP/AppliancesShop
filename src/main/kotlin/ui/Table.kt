@@ -1,13 +1,11 @@
 package ui
 
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
+import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.runtime.Composable
@@ -24,6 +22,7 @@ import androidx.compose.ui.unit.*
  * @param headerCellContent a block which describes the header cell content.
  * @param cellContent a block which describes the cell content.
  */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun <T> Table(
     columnCount: Int,
@@ -31,6 +30,7 @@ fun <T> Table(
     data: List<T>,
     modifier: Modifier = Modifier,
     color: Color = Color.Transparent,
+    contextMenuItems: (Int) -> List<ContextMenuItem> = { listOf() },
     headerCellContent: @Composable (index: Int) -> Unit,
     cellContent: @Composable (index: Int, item: T) -> Unit,
 ) {
@@ -40,17 +40,19 @@ fun <T> Table(
     ) {
         LazyRow(modifier = Modifier.background(Color.Transparent)) {
             items((0 until columnCount).toList()) { columnIndex ->
-                Column(modifier = Modifier.background(Color.Transparent)) {
+                Column(modifier = Modifier.background(Color.Transparent).animateItemPlacement()) {
                     (0..data.size).forEach { index ->
-                        Surface(
-                            border = BorderStroke(1.dp, MaterialTheme.colors.onPrimary),
-                            contentColor = Color.Transparent,
-                            color = color,
-                            modifier = Modifier.width(cellWidth(columnIndex))
-                        ) {
-                            when (index == 0) {
-                                true -> headerCellContent(columnIndex)
-                                false -> cellContent(columnIndex, data[index - 1])
+                        ContextMenuArea(items = { contextMenuItems(index) }) {
+                            Surface(
+                                border = BorderStroke(1.dp, MaterialTheme.colors.onPrimary),
+                                contentColor = Color.Transparent,
+                                color = color,
+                                modifier = Modifier.width(cellWidth(columnIndex))
+                            ) {
+                                when (index == 0) {
+                                    true -> headerCellContent(columnIndex)
+                                    false -> cellContent(columnIndex, data[index - 1])
+                                }
                             }
                         }
                     }

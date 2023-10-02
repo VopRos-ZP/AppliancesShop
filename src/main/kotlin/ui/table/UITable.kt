@@ -2,6 +2,7 @@ package ui.table
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ContextMenuItem
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
@@ -9,8 +10,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Done
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -23,7 +22,11 @@ import org.jetbrains.exposed.sql.Column
 import ui.Table
 
 @Composable
-fun UITable(table: FKTableField<*, *>, onAddClick: () -> Unit) {
+fun <T: Model> UITable(
+    table: FKTableField<T, *>,
+    onDelete: (T) -> Unit,
+    onAddClick: () -> Unit
+) {
     Card(
         modifier = Modifier.animateContentSize(),
         backgroundColor = MaterialTheme.colors.primary,
@@ -50,6 +53,12 @@ fun UITable(table: FKTableField<*, *>, onAddClick: () -> Unit) {
                 } },
                 data = table.data,
                 color = MaterialTheme.colors.primary,
+                contextMenuItems = {
+                    listOf(
+                        ContextMenuItem("Удалить") { onDelete(table.data[it - 1]) },
+                        ContextMenuItem("Редактировать") { },
+                    )
+                },
                 headerCellContent = { UITableHeader(it, table.columns) },
                 cellContent = { i, item -> UITableCell(i, item, table.columns) }
             )

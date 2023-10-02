@@ -1,9 +1,11 @@
 package ui
 
+import androidx.compose.foundation.ContextMenuItem
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -21,7 +23,10 @@ import utils.toLocalDate
 
 @Suppress("UNCHECKED_CAST")
 @Composable
-fun <T : Model> AddDialog(table: FKTableField<T, *>, onClose: (T?) -> Unit) {
+fun <T : Model> AddDialog(
+    table: FKTableField<T, *>,
+    onClose: (List<T>) -> Unit
+) {
     AddDialog(
         table = table,
         onSave = {
@@ -38,7 +43,7 @@ fun <T : Model> AddDialog(table: FKTableField<T, *>, onClose: (T?) -> Unit) {
                          installationPrice = it["installation_price"]?.toInt(),
                          guaranteePrice = it["guarantee_price"]?.toInt()
                      ) as T
-                     else -> Model.Sale(
+                     is Model.Sale -> Model.Sale(
                          id = it["id"]?.toInt() ?: 0,
                          date = it["date"]?.toLocalDate() ?: java.time.LocalDate.now().let { d -> LocalDate(d.year, d.month, d.dayOfMonth) },
                          product = table.targetData.first { t -> t.fields["id"] == (it["product_id"].let { c -> if (c.isNullOrEmpty()) "1" else c }) } as Model.Product,
@@ -46,23 +51,23 @@ fun <T : Model> AddDialog(table: FKTableField<T, *>, onClose: (T?) -> Unit) {
                          firstname = it["firstname"] ?: "",
                          patronymic = it["patronymic"],
                      ) as T
+                     else -> null
                  }
         },
-        onClose = { onClose(it as? T) }
+        onClose = { onClose(it) }
     )
 }
 
 @Composable
 fun <T: Model> AddDialog(
     table: FKTableField<T, *>,
-    onSave: (Map<String, String>) -> T,
-    onClose: (Model?) -> Unit
+    onSave: (Map<String, String>) -> T?,
+    onClose: (List<T>) -> Unit
 ) {
     val state = rememberDialogState(width = 1000.dp, height = 500.dp)
-    var result by remember { mutableStateOf<Model?>(null) }
-    val map = remember { mutableStateMapOf<String, String>() }
+    val results = remember { mutableStateListOf(mutableStateMapOf<String, String>()) }
     Dialog(
-        onCloseRequest = { onClose(result) },
+        onCloseRequest = { onClose(emptyList()) },
         state = state
     ) {
         Column(
@@ -70,33 +75,39 @@ fun <T: Model> AddDialog(
                 .padding(20.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            Table(
-                columnCount = table.columns.size,
-                cellWidth = { when (it) {
-                    0 -> 75.dp
-                    else -> 225.dp
-                } },
-                data = List(1) { it },
-                color = MaterialTheme.colors.primary,
-                headerCellContent = { UITableHeader(it, table.columns) },
-                cellContent = { i, _ -> AddDialogCell(table.columns[i], table.targetData) {
-                    map[table.columns[i].name] = it
-                    result = onSave(map)
-                    println("value change $it")
-                } }
-            )
+            Column {
+                IconButton(onClick = { results.add(mutableStateMapOf()) }) {
+                    Icon(imageVector = Icons.Default.Add, contentDescription = null)
+                }
+                Table(
+                    columnCount = table.columns.size,
+                    cellWidth = { when (it) {
+                        0 -> 75.dp
+                        else -> 225.dp
+                    } },
+                    data = results,
+                    color = MaterialTheme.colors.primary,
+                    contextMenuItems = {
+                        listOf(ContextMenuItem("Удалить строку") { results.removeAt(it - 1) })
+                    },
+                    headerCellContent = { UITableHeader(it, table.columns) },
+                    cellContent = { i, res -> AddDialogCell(table.columns[i], table.targetData) {
+                        res[table.columns[i].name] = it
+                    } }
+                )
+            }
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(20.dp)
             ) {
                 Button(
-                    onClick = { onClose(null) },
+                    onClick = { onClose(emptyList()) },
                     colors = ButtonDefaults.buttonColors(
                         backgroundColor = Color.Red,
                         contentColor = MaterialTheme.colors.onPrimary
                     )
                 ) { Text("Назад") }
-                Button(onClick = { onClose(result) }) { Text("Сохранить") }
+                Button(onClick = { onClose(results.mapNotNull(onSave)) }) { Text("Сохранить") }
             }
         }
     }
@@ -118,28 +129,41 @@ fun TextureField(column: Column<*>, onValueChange: (String) -> Unit) {
         is EntityIDColumnType<*> -> KeyboardType.Number
         else -> KeyboardType.Text
     }
-    OutlinedTextField(
-        value = value,
-        onValueChange = {
-            value = when (type) {
-                KeyboardType.Number -> try { "${it.toInt()}" } catch (_: Exception) { it.dropLast(1) }
-                else -> it
-            }
-            onValueChange(value)
-        },
-        keyboardOptions = KeyboardOptions(keyboardType = type),
-        colors = TextFieldDefaults.outlinedTextFieldColors(textColor = MaterialTheme.colors.onPrimary)
-    )
+    Box(modifier = Modifier.padding(10.dp)) {
+        OutlinedTextField(
+            value = value,
+            onValueChange = {
+                value = when (type) {
+                    KeyboardType.Number -> try {
+                        "${it.toInt()}"
+                    } catch (_: Exception) {
+                        it.dropLast(1)
+                    }
+
+                    else -> it
+                }
+                onValueChange(value)
+            },
+            keyboardOptions = KeyboardOptions(keyboardType = type),
+            colors = TextFieldDefaults.outlinedTextFieldColors(
+                cursorColor = MaterialTheme.colors.onPrimary,
+                unfocusedBorderColor = MaterialTheme.colors.secondary,
+                focusedBorderColor = MaterialTheme.colors.onPrimary,
+                textColor = MaterialTheme.colors.onPrimary
+            )
+        )
+    }
 }
 
 @Composable
 fun <T: Model> DropDownField(data: List<T>, onValueChange: (String) -> Unit) {
     var value by remember { mutableStateOf<T?>(null) }
     var expanded by remember { mutableStateOf(false) }
-    LaunchedEffect(value) { onValueChange(value?.fields?.get("id") ?: "") }
-    Box {
+    val id = value?.fields?.get("id") ?: ""
+    LaunchedEffect(value) { onValueChange(id) }
+    Box(modifier = Modifier.padding(10.dp)) {
         OutlinedTextField(
-            value = value?.fields?.get("id") ?: "",
+            value = id,
             onValueChange = {},
             readOnly = true,
             trailingIcon = { IconButton(onClick = { expanded = true }) {

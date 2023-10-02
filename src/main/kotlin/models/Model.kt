@@ -1,7 +1,6 @@
 package models
 
 import kotlinx.datetime.LocalDate
-import kotlin.reflect.full.createInstance
 
 sealed class Model(val fields: Map<String, String>) {
     data class Category(
@@ -38,21 +37,5 @@ sealed class Model(val fields: Map<String, String>) {
         "firstname" to firstname,
         "patronymic" to (patronymic ?: "")
     ))
-
-    fun copy(args: Map<String, String>): Model {
-        return when (val instance = this) {
-            is Category -> instance.copy(
-                id = args["id"]?.toInt() ?: 0,
-                name = args["name"] ?: ""
-            )
-            is Product -> instance.copy(
-                id = args["id"]?.toInt() ?: 0,
-                name = args["name"] ?: "",
-                category = instance.category.copy(),
-                price = args["price"]?.toInt() ?: 0
-            )
-            is Sale -> instance.copy()
-        }
-    }
 
 }
