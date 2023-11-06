@@ -181,3 +181,41 @@ class Postgres {
     }
 
 }
+/**
+ *
+ * create table Categories
+ * (
+ *     id   serial primary key not null,
+ *     name nchar(50)          not null
+ * );
+ *
+ * create table Product
+ * (
+ *     id                 serial primary key not null,
+ *     name               nchar(50)          not null,
+ *     category_id        serial             not null references Categories (id),
+ *     price              int                not null,
+ *     installation_price int default null,
+ *     guarantee_price    int default null
+ * );
+ *
+ * create table Sales
+ * (
+ *     id                  serial primary key not null,
+ *     registration_number int                not null,
+ *     date                date               not null,
+ *     product_id          serial references Product (id),
+ *     firstname           nchar(25)          not null,
+ *     lastname            nchar(50)          not null,
+ *     patronymic          nchar(50) default null
+ * );
+ *
+ * delete from product where id = 0;
+ *
+ * select firstname, lastname, patronymic, count(p.id), (sum(p.price) + sum(p.guarantee_price) + sum(p.installation_price)) as sum from sales as s
+ * inner join Product as p on s.product_id = p.id
+ * group by firstname, lastname, patronymic;
+ *
+ *
+ *
+ * **/
