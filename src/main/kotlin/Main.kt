@@ -10,11 +10,15 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
+import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import database.Postgres
+import database.pDsl
 import models.Model
 import ui.AddDialog
+import ui.AllSumProducts
+import ui.SaledProducts
 import ui.table.FKTableField
 import ui.table.UITable
 
@@ -28,37 +32,59 @@ fun App() {
     val products by remember(database) { mutableStateOf(database.fetchProductTable()) }
     val sales by remember(database) { mutableStateOf(database.fetchSaleTable()) }
 
+    var showSaled by remember { mutableStateOf(false) }
+    var showAllSum by remember { mutableStateOf(false) }
+
     Box {
         AnimatedVisibility(target != null) {
-            target?.let { AddDialog(it) { ms ->
-                ms.forEach { m ->
-                    println("m = $m")
-                    when (m) {
-                        is Model.Category -> database.insertCategory(m)
-                        is Model.Product -> database.insertProduct(m)
-                        is Model.Sale -> database.insertSale(m)
+            target?.let {
+                AddDialog(it) { ms ->
+                    ms.forEach { m ->
+                        when (m) {
+                            is Model.Category -> database.insertCategory(m)
+                            is Model.Product -> database.insertProduct(m)
+                            is Model.Sale -> database.insertSale(m)
+                            else -> {}
+                        }
+                        database = Postgres()
+                        target = null
                     }
                 }
-                database = Postgres()
-                target = null
-            } }
+            }
+        }
+        AnimatedVisibility(showSaled) {
+            SaledProducts(database) { showSaled = false }
+        }
+        AnimatedVisibility(showAllSum) {
+            AllSumProducts(database) { showAllSum = false }
         }
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(20.dp),
             contentPadding = PaddingValues(20.dp)
         ) {
-            item { Row { Button(onClick = {}) { Text("Создать запрос") } } }
+            item {
+                Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+                    Button(onClick = { showSaled = true }) { Text("Приобретенные товары") }
+                    Button(onClick = { showAllSum = true }) { Text("Общая сумма покупателя") }
+                }
+            }
             items(listOf(categories, products, sales)) {
                 Box(modifier = Modifier.animateItemPlacement()) {
-                    UITable(it, { m ->
-                        when (m) {
-                            is Model.Category -> database.deleteCategoryById(m.id)
-                            is Model.Product -> database.deleteProductById(m.id)
-                            is Model.Sale -> database.deleteSaleById(m.id)
+                    UITable(it,
+                        onDelete = pDsl {
+                            onModel<Model.Category> { database.deleteCategoryById(it.id) }
+                            onModel<Model.Product> { database.deleteProductById(it.id) }
+                            onModel<Model.Sale> { database.deleteSaleById(it.id) }
+                            database = Postgres()
+                        },
+                        onEdit = pDsl {
+                            onModel<Model.Category> { database.insertCategory(it) }
+                            onModel<Model.Product> { database.insertProduct(it) }
+                            onModel<Model.Sale> { database.insertSale(it) }
+                            database = Postgres()
                         }
-                        database = Postgres()
-                    }) { target = it }
+                    ) { target = it }
                 }
             }
         }
@@ -66,7 +92,7 @@ fun App() {
 }
 
 fun main() = application {
-    val state = rememberWindowState()
+    val state = rememberWindowState(WindowPlacement.Fullscreen)
     Window(
         onCloseRequest = ::exitApplication,
         title = "Appliances shop",

@@ -3,10 +3,9 @@ package database
 import models.Model
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
 import org.jetbrains.exposed.sql.transactions.transaction
-import tables.Categories
-import tables.Product
-import tables.Sales
+import tables.*
 import ui.table.FKTableField
 
 class Postgres {
@@ -16,6 +15,8 @@ class Postgres {
         driver = "org.postgresql.Driver",
         user = "postgres", password = "root"
     )
+
+    private val fl = { s: String -> "${s.first().uppercase()}." }
 
     fun deleteCategoryById(categoryId: Int) {
         transaction(db) { Categories.deleteWhere { id eq categoryId } }
@@ -64,6 +65,25 @@ class Postgres {
         }
     }
 
+    fun fetchAllSumTable(): FKTableField<*, *> = transaction(db) {
+        FKTableField(
+            listOf(
+                AllSum.id, AllSum.firstname, AllSum.lastname, AllSum.patronymic
+            ),
+            fetchAllSum(), emptyList()
+        )
+    }
+
+    fun fetchSaledProductsTable(): FKTableField<*, *> = transaction(db) {
+        FKTableField(
+            listOf(
+                SaledProducts.id, SaledProducts.date, SaledProducts.fio,
+                SaledProducts.category, SaledProducts.product, SaledProducts.price
+            ),
+            fetchSaledProducts(), emptyList()
+        )
+    }
+
     fun fetchCategoryTable(): FKTableField<*, *> = transaction(db) {
         FKTableField(
             listOf(Categories.id, Categories.name),
@@ -73,27 +93,52 @@ class Postgres {
 
     fun fetchProductTable(): FKTableField<*, *> = transaction(db) {
         FKTableField(
-            listOf(
-                Product.id, Product.name,
-                Product.category, Product.price,
-                Product.installationPrice,
-                Product.guaranteePrice
-            ),
-            fetchProducts(),
-            fetchCategories()
+            listOf(Product.id, Product.name, Product.category, Product.price, Product.installationPrice, Product.guaranteePrice),
+            fetchProducts(), fetchCategories()
         )
     }
 
     fun fetchSaleTable(): FKTableField<*, *> = transaction(db) {
         FKTableField(
-            listOf(
-                Sales.id, Sales.date,
-                Sales.productId, Sales.lastname,
-                Sales.firstname, Sales.patronymic
-            ),
-            fetchSales(),
-            fetchProducts()
+            listOf(Sales.id, Sales.date, Sales.productId, Sales.firstname, Sales.lastname, Sales.patronymic),
+            fetchSales(), fetchProducts()
         )
+    }
+
+    private fun fetchAllSum(): List<Model.AllSum> = transaction(db) {
+        (Sales innerJoin Product)
+            .slice(
+                Sales.firstname, Sales.lastname, Sales.patronymic,
+                Sales.productId.count(), Product.price.sum()
+                        + Product.guaranteePrice.sum()
+                        + Product.installationPrice.sum())
+            .selectAll()
+            .groupBy(Sales.firstname, Sales.lastname, Sales.patronymic)
+            .mapIndexed { i, row ->
+                Model.AllSum(
+                    id = i + 1,
+                    fio = "${fl(row[Sales.lastname])} ${fl(row[Sales.firstname])} ${row[Sales.patronymic] ?: ""}",
+                    count = row[Sales.productId.count()].toInt(),
+                    sum = row[Product.price.sum()
+                            + Product.guaranteePrice.sum()
+                            + Product.installationPrice.sum()]?.toInt() ?: 0
+                )
+            }
+    }
+
+    private fun fetchSaledProducts(): List<Model.SaledProduct> = transaction(db) {
+        fetchSales().mapIndexed { index, sale ->
+            Model.SaledProduct(
+                id = (index + 1),
+                date = sale.date,
+                fio = "${fl(sale.lastname)} ${fl(sale.firstname)} ${sale.patronymic}",
+                category = sale.product.category,
+                product = sale.product,
+                price = sale.product.price +
+                        (sale.product.guaranteePrice ?: 0) +
+                        (sale.product.installationPrice ?: 0)
+            )
+        }.sortedBy { it.date }
     }
 
     private fun fetchCategories(): List<Model.Category> = transaction(db) {
@@ -119,10 +164,10 @@ class Postgres {
         }
     }
 
-    private fun fetchSales(): List<Model.Sale> {
+    private fun fetchSales(query: Query.() -> Query = { this }): List<Model.Sale> {
         return transaction(db) {
             val products = fetchProducts()
-            Sales.selectAll().map {
+            Sales.selectAll().query().map {
                 Model.Sale(
                     id = it[Sales.id].value,
                     date = it[Sales.date],

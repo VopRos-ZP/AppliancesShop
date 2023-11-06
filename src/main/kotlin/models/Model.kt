@@ -1,6 +1,7 @@
 package models
 
 import kotlinx.datetime.LocalDate
+import tables.Product
 
 sealed class Model(val fields: Map<String, String>) {
     data class Category(
@@ -38,4 +39,31 @@ sealed class Model(val fields: Map<String, String>) {
         "patronymic" to (patronymic ?: "")
     ))
 
+    data class SaledProduct(
+        val id: Int,
+        val date: LocalDate,
+        val fio: String,
+        val category: Category,
+        val product: Product,
+        val price: Int
+    ) : Model(mapOf(
+        "id" to "$id",
+        "Дата продажи" to "$date",
+        "ФИО" to fio,
+        "Категория товара" to category.name,
+        "Наименование" to product.name,
+        "Общая стоимость" to "$price"
+    ))
+
+    data class AllSum(
+        val id: Int,
+        val fio: String,
+        val count: Int,
+        val sum: Int
+    ) : Model(mapOf(
+        "id" to "$id",
+        "ФИО покупателя" to fio,
+        "Количество товаров" to "$count",
+        "Сумма товаров" to "$sum",
+    ))
 }

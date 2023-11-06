@@ -13,6 +13,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.WindowPlacement
+import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.rememberDialogState
 import kotlinx.datetime.LocalDate
 import models.Model
@@ -64,7 +66,7 @@ fun <T: Model> AddDialog(
     onSave: (Map<String, String>) -> T?,
     onClose: (List<T>) -> Unit
 ) {
-    val state = rememberDialogState(width = 1000.dp, height = 500.dp)
+    val state = rememberDialogState(WindowPosition.PlatformDefault)
     val results = remember { mutableStateListOf(mutableStateMapOf<String, String>()) }
     Dialog(
         onCloseRequest = { onClose(emptyList()) },
@@ -80,7 +82,7 @@ fun <T: Model> AddDialog(
                     Icon(imageVector = Icons.Default.Add, contentDescription = null)
                 }
                 Table(
-                    columnCount = table.columns.size,
+                    columnCount = table.data.size,
                     cellWidth = { when (it) {
                         0 -> 75.dp
                         else -> 225.dp
@@ -90,9 +92,9 @@ fun <T: Model> AddDialog(
                     contextMenuItems = {
                         listOf(ContextMenuItem("Удалить строку") { results.removeAt(it - 1) })
                     },
-                    headerCellContent = { UITableHeader(it, table.columns) },
+                    headerCellContent = { UITableHeader(it, table.data[0].fields) },
                     cellContent = { i, res -> AddDialogCell(table.columns[i], table.targetData) {
-                        res[table.columns[i].name] = it
+                        res[table.data[0].fields.keys.elementAt(i)] = it
                     } }
                 )
             }
